@@ -3,9 +3,10 @@ import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
+import stylisticTs from '@stylistic/eslint-plugin-ts'
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  {ignores: ['dist']},
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -16,13 +17,19 @@ export default tseslint.config(
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
+      '@stylistic/ts': stylisticTs
+
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true },
+        {allowConstantExport: true},
       ],
+      '@stylistic/ts/indent': ['error', 2],
+      '@stylistic/ts/quotes': ['error', 'single'],
+      '@stylistic/ts/object-curly-spacing': ['error', 'always'],
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 )
