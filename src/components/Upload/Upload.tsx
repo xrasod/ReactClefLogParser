@@ -1,29 +1,34 @@
 ﻿import * as React from 'react';
 import { FileUpload, FileUploadHandlerEvent } from 'primereact/fileupload';
-import { LogParser } from '../../helpers/LogSearcher.ts';
+import { LogFile, LogParser } from '../../helpers/LogSearcher.ts';
 
-const Upload: React.FC = () => {
+interface UploadProps {
+  uploadComplete: (logs: LogFile[]) => void;
+}
+
+const Upload: React.FC<UploadProps> = ({ uploadComplete }) => {
   const parser = new LogParser();
   const ref = React.useRef<FileUpload>(null);
-
-  const uploadHandler = (e: FileUploadHandlerEvent) => {
-    if(ref.current == null) return;
+  const [files, setFiles] = React.useState<LogFile[]>([]);
+  
+  const uploadHandler = (_: FileUploadHandlerEvent) => {
+    if (ref.current == null) return;
     const uploadedFiles: File[] = [];
+    ref.current!.clear();
     ref.current.getFiles().forEach((file) => {
-      ref.current!.clear();
       const reader = new FileReader();
       reader.onload = () => {
-        parser.parseLogFileContent(reader.result as string);
+        setFiles([...files, parser.parseLogFileContent(reader.result as string)]);
       };
       reader.readAsText(file);
       uploadedFiles.push(file);
-      if(ref.current == null) return;
+      if (ref.current == null) return;
       ref.current!.setUploadedFiles(uploadedFiles);
     });
-    console.log(parser.getLogLevelCounts());
+    uploadComplete(files);
   }
-    
-  
+
+
   return (
     <>
       <div className="card">

@@ -1,30 +1,35 @@
-import { useState } from 'react'
+import { Panel } from 'primereact/panel';
+import { useRef, useState } from 'react'
 import './App.css'
 import { PrimeReactProvider } from 'primereact/api';
-import { Button } from 'primereact/button';
 import 'primereact/resources/themes/lara-dark-purple/theme.css';
 import 'primereact/resources/primereact.min.css'; //core css
 import 'primeicons/primeicons.css'; //icons
 import 'primeflex/primeflex.css';
-// import Navigation from './components/Navigation';
 import Upload from './components/Upload/Upload.tsx';
+import { LogFile } from './helpers/LogSearcher.ts';
 
 function App() {
-  const [ count, setCount ] = useState(0)
+
+  const [ logs, setLogs ] = useState<LogFile[]>([]);
+  const [ searchTerm, setSearchTerm ] = useState<string>('');
+  const panelRef = useRef<Panel>(null);
+  const setLogsHandler = (logs: LogFile[]) => {
+    setLogs(logs);
+      setTimeout(() => {
+    if(panelRef.current) 
+        panelRef.current.collapse(undefined);
+      }, 1000);
+  }
 
   return (
     <PrimeReactProvider>
-
-      {/*<Navigation/>*/}
-      <Upload/>
-      <div className="
-      ">
-        <Button onClick={() => setCount((count) => count + 1)} label={'count is ' + count}/>
-
-      </div>
+      <Panel header="Upload Log Files" className="p-m-2" toggleable ref={panelRef}>
+        <Upload/>
+      </Panel>
 
     </PrimeReactProvider>
   )
 }
 
-export default App
+export default App;

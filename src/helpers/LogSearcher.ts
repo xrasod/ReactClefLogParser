@@ -1,6 +1,5 @@
-﻿
-interface ClefLog {
-  Timestamp: string;
+﻿export interface ClefLogRow {
+  Timestamp: Date;
   Level: string;
   MessageTemplate: string;
   RenderedMessage?: string;
@@ -9,48 +8,54 @@ interface ClefLog {
   [key: string]: any;
 }
 
+export interface LogFile {
+  filename: string;
+  content: ClefLogRow[];
+  date?: Date;
+}
+
 interface ClefLogInput {
   '@l': string
   '@mt': string
   '@t': string
+
   [key: string]: string | number;
 }
 
-export class LogParser {
-  protected logLevelCounts: Record<string, number> = {};
 
-  parseLogFileContent(fileContent: string) {
-    const logs: ClefLogInput[] = [];
+export class LogParser {
+  parseLogFileContent(fileContent: string): LogFile {
+    const preparsedLogs: ClefLogInput[] = [];
     // Split the content by newlines to get each JSON string
     const lines = fileContent.split('\r\n');
     // Parse each line into a JSON object, filtering out empty lines
     const jsonObjects = lines
       .filter(line => line.trim() !== '') // filter out empty lines
       .map((line) => JSON.parse(line)); // parse each line
-    
-    logs.push(...jsonObjects);
 
-    logs.forEach(log => {
-      const level = log['@l'];
-      if (this.logLevelCounts[level]) {
-        this.logLevelCounts[level]++;
-      } else {
-        this.logLevelCounts[level] = 1;
-      }
-    });
-  }
+    preparsedLogs.push(...jsonObjects);
 
-  getLogLevelCounts() {
-    return this.logLevelCounts;
+    return {
+      filename: 'test',
+      content: preparsedLogs.map(log => {
+        return {
+          Timestamp: new Date(log['@t']),
+          Level: log['@l'],
+          MessageTemplate: log['@mt'],
+          Properties: log,
+          RenderedMessage: replaceMessageTemplate(log['@mt'], log),
+        }
+      }),
+    }
   }
 }
 
 export class LogSearcher extends LogParser {
   searchLogs(fileContents: string[], searchTerm: string) {
-    const timeline: ClefLog[] = [];
+    const timeline: ClefLogRow[] = [];
 
     fileContents.forEach(fileContent => {
-      const logs: ClefLog[] = JSON.parse(fileContent);
+      const logs: ClefLogRow[] = JSON.parse(fileContent);
 
       logs.forEach(log => {
         if (log.RenderedMessage && log.RenderedMessage.includes(searchTerm)) {
@@ -67,3 +72,10 @@ export class LogSearcher extends LogParser {
     return timeline;
   }
 }
+
+
+const replaceMessageTemplate = (message: string, meta: Record<string, any>): string => {
+  return message.replace(/{([^}]+)}/g, (match, key) => {
+    return meta[key] !== undefined && meta[key] !== '' ? meta[key] : match;
+  });
+};
